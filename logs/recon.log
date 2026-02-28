@@ -1,0 +1,47 @@
+2026-02-28 23:27:50,045 [INFO]  AUTOMATED FINANCIAL RECONCILIATION — DAILY RUN
+2026-02-28 23:32:37,719 [INFO] ============================================================
+2026-02-28 23:32:37,721 [INFO]  AUTOMATED FINANCIAL RECONCILIATION - DAILY RUN
+2026-02-28 23:32:37,721 [INFO] ============================================================
+2026-02-28 23:34:46,705 [INFO] ============================================================
+2026-02-28 23:34:46,705 [INFO]  AUTOMATED FINANCIAL RECONCILIATION - DAILY RUN
+2026-02-28 23:34:46,705 [INFO] ============================================================
+2026-02-28 23:34:46,727 [INFO] Loaded bank.csv: 81 rows, 10 cols
+2026-02-28 23:34:46,733 [INFO] Loaded gl.csv: 86 rows, 13 cols
+2026-02-28 23:34:46,733 [ERROR] BankStatement: Missing columns: ['BS_TXN_ID', 'VALUE_DATE', 'TXN_TYPE', 'DEBIT_AMOUNT', 'CREDIT_AMOUNT', 'CURRENCY', 'COUNTERPARTY']
+2026-02-28 23:38:10,984 [INFO] ============================================================
+2026-02-28 23:38:10,984 [INFO]  AUTOMATED FINANCIAL RECONCILIATION - DAILY RUN
+2026-02-28 23:38:10,984 [INFO] ============================================================
+2026-02-28 23:38:11,021 [INFO] Loaded bank.csv: 80 rows, 10 cols
+2026-02-28 23:38:11,054 [INFO] Loaded gl.csv: 85 rows, 13 cols
+2026-02-28 23:38:11,070 [INFO] BankStatement: Validation passed — 80 records
+2026-02-28 23:38:11,077 [WARNING] GeneralLedger: Null values detected:
+BS_REF    10
+dtype: int64
+2026-02-28 23:38:11,078 [INFO] GeneralLedger: Validation passed — 85 records
+2026-02-28 23:38:11,080 [INFO] Starting reconciliation run…
+2026-02-28 23:38:11,103 [INFO] Reconciliation complete: 90 records | Matched: 70 | High-risk: 17
+2026-02-28 23:39:06,269 [INFO] ============================================================
+2026-02-28 23:39:06,269 [INFO]  AUTOMATED FINANCIAL RECONCILIATION - DAILY RUN
+2026-02-28 23:39:06,269 [INFO] ============================================================
+2026-02-28 23:39:06,303 [INFO] Loaded bank.csv: 80 rows, 10 cols
+2026-02-28 23:39:06,311 [INFO] Loaded gl.csv: 85 rows, 13 cols
+2026-02-28 23:39:06,314 [INFO] BankStatement: Validation passed — 80 records
+2026-02-28 23:39:06,318 [WARNING] GeneralLedger: Null values detected:
+BS_REF    10
+dtype: int64
+2026-02-28 23:39:06,319 [INFO] GeneralLedger: Validation passed — 85 records
+2026-02-28 23:39:06,321 [INFO] Starting reconciliation run…
+2026-02-28 23:39:06,338 [INFO] Reconciliation complete: 90 records | Matched: 70 | High-risk: 17
+2026-02-28 23:40:42,639 [INFO] ============================================================
+2026-02-28 23:40:42,639 [INFO]  AUTOMATED FINANCIAL RECONCILIATION - DAILY RUN
+2026-02-28 23:40:42,639 [INFO] ============================================================
+2026-02-28 23:40:42,639 [INFO] Loaded bank.csv: 80 rows, 10 cols
+2026-02-28 23:40:42,663 [INFO] Loaded gl.csv: 85 rows, 13 cols
+2026-02-28 23:40:42,671 [INFO] BankStatement: Validation passed — 80 records
+2026-02-28 23:40:42,675 [WARNING] GeneralLedger: Null values detected:
+BS_REF    10
+dtype: int64
+2026-02-28 23:40:42,675 [INFO] GeneralLedger: Validation passed — 85 records
+2026-02-28 23:40:42,675 [INFO] Starting reconciliation run…
+2026-02-28 23:40:42,692 [INFO] Reconciliation complete: 90 records | Matched: 70 | High-risk: 17
+2026-02-28 23:40:43,191 [INFO] DONE — Match rate: 77.78% | Variance: $16,836,978.88

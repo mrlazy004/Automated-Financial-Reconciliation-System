@@ -1,0 +1,30 @@
+{
+  "run_date": "2026-02-28",
+  "total_records": 90,
+  "matched": 70,
+  "match_rate_pct": 77.78,
+  "high_risk_count": 17,
+  "medium_risk_count": 2,
+  "total_variance_usd": 16836978.88,
+  "max_single_variance": 2184821.52,
+  "status_breakdown": {
+    "MATCHED": 70,
+    "MISSING_IN_BANK": 10,
+    "MISSING_IN_LEDGER": 5,
+    "MAJOR_VARIANCE": 2,
+    "MODERATE_VARIANCE": 2,
+    "MINOR_VARIANCE": 1
+  },
+  "risk_breakdown": {
+    "LOW": 71,
+    "HIGH": 17,
+    "MEDIUM": 2
+  },
+  "currency_exposure": {
+    "CHF": 37222664.73,
+    "EUR": 36235873.91,
+    "GBP": 43140336.99,
+    "JPY": 39043880.0,
+    "USD": 26805989.76
+  }
+}
