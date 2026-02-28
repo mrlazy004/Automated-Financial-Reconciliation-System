@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Financial Reconciliation System | JPMorgan Chase</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --navy: #0a1628;
+    --navy2: #102040;
+    --blue: #1a4faa;
+    --cyan: #00d4ff;
+    --green: #00e07a;
+    --amber: #ffb800;
+    --red: #ff3b5c;
+    --surface: #0f1f3d;
+    --surface2: #162847;
+    --border: rgba(0,212,255,0.12);
+    --text: #e8f4ff;
+    --muted: #6b8fc4;
+    --font-mono: 'DM Mono', monospace;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Grid background ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── Glow blobs ── */
+  .blob {
+    position: fixed; border-radius: 50%; filter: blur(100px);
+    pointer-events: none; z-index: 0; opacity: 0.15;
+  }
+  .blob-1 { width:600px;height:600px;top:-150px;left:-150px;background:var(--blue); }
+  .blob-2 { width:400px;height:400px;bottom:0;right:0;background:var(--cyan); }
+  .blob-3 { width:300px;height:300px;top:50%;left:50%;background:var(--amber);opacity:0.07; }
+
+  /* ── Layout ── */
+  .container { max-width: 1440px; margin: 0 auto; padding: 0 32px; position: relative; z-index: 1; }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,22,40,0.8);
+    backdrop-filter: blur(20px);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .logo-mark {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--cyan), var(--blue));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 800; font-size: 16px;
+    color: white;
+  }
+  .logo-text {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 15px; line-height: 1.2;
+  }
+  .logo-sub { font-size: 11px; color: var(--muted); font-weight: 400; letter-spacing: 0.08em; }
+  .header-meta {
+    display: flex; align-items: center; gap: 24px;
+    font-size: 12px; color: var(--muted); font-family: var(--font-mono);
+  }
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(0,224,122,0.1); border: 1px solid rgba(0,224,122,0.3);
+    color: var(--green); padding: 4px 12px; border-radius: 20px; font-size: 11px;
+    font-weight: 600; letter-spacing: 0.06em;
+  }
+  .live-dot {
+    width: 6px; height: 6px; background: var(--green); border-radius: 50%;
+    animation: pulse-dot 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%,100% { opacity:1; transform: scale(1); }
+    50% { opacity:0.4; transform: scale(0.8); }
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    padding: 48px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .period-label {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--cyan); letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .page-title {
+    font-family: var(--font-display); font-size: 36px; font-weight: 800;
+    line-height: 1.1; margin-bottom: 8px;
+    background: linear-gradient(135deg, #fff 30%, var(--cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .page-sub { color: var(--muted); font-size: 14px; }
+
+  /* ── KPI row ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px; margin-bottom: 40px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px 20px;
+    position: relative; overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .kpi-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .kpi-card.matched::before  { background: var(--green); }
+  .kpi-card.mismatch::before { background: var(--amber); }
+  .kpi-card.missing::before  { background: var(--red); }
+  .kpi-card.total::before    { background: var(--cyan); }
+  .kpi-card.variance::before { background: var(--amber); }
+  .kpi-card:hover { transform: translateY(-2px); border-color: rgba(0,212,255,0.25); }
+
+  .kpi-label {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 12px;
+  }
+  .kpi-value {
+    font-family: var(--font-display); font-size: 32px; font-weight: 800; line-height: 1;
+  }
+  .kpi-value.matched  { color: var(--green); }
+  .kpi-value.mismatch { color: var(--amber); }
+  .kpi-value.missing  { color: var(--red); }
+  .kpi-value.total    { color: var(--cyan); }
+  .kpi-value.variance { color: var(--amber); font-size: 22px; }
+  .kpi-sub {
+    margin-top: 8px; font-size: 12px; color: var(--muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .kpi-sub .tag {
+    padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;
+  }
+  .tag.low    { background: rgba(0,224,122,0.15); color: var(--green); }
+  .tag.medium { background: rgba(255,184,0,0.15);  color: var(--amber); }
+  .tag.high   { background: rgba(255,59,92,0.15);  color: var(--red); }
+
+  /* ── Sections ── */
+  .section { margin-bottom: 40px; }
+  .section-title {
+    font-family: var(--font-display); font-size: 14px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--cyan);
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::after {
+    content:''; flex:1; height:1px; background: var(--border);
+  }
+
+  /* ── Two column grid ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+
+  /* ── Panel ── */
+  .panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+  }
+  .panel-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  /* ── Table ── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table th {
+    padding: 10px 16px; text-align: left; background: rgba(255,255,255,0.03);
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: middle;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ── Status badge ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 600;
+    font-family: var(--font-mono); letter-spacing: 0.05em; white-space: nowrap;
+  }
+  .badge-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .badge.matched    { background: rgba(0,224,122,0.12); color: var(--green); }
+  .badge.matched .badge-dot { background: var(--green); }
+  .badge.minor      { background: rgba(255,255,255,0.07); color: #aaa; }
+  .badge.minor .badge-dot { background: #aaa; }
+  .badge.moderate   { background: rgba(255,184,0,0.12); color: var(--amber); }
+  .badge.moderate .badge-dot { background: var(--amber); }
+  .badge.major      { background: rgba(255,59,92,0.12); color: var(--red); }
+  .badge.major .badge-dot { background: var(--red); }
+  .badge.missing    { background: rgba(255,59,92,0.18); color: var(--red); }
+  .badge.missing .badge-dot { background: var(--red); }
+
+  /* ── Bar chart ── */
+  .bar-chart { padding: 20px; }
+  .bar-row {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+  }
+  .bar-label { font-size: 11px; color: var(--muted); width: 130px; flex-shrink:0; font-family: var(--font-mono); }
+  .bar-track { flex: 1; height: 20px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
+  .bar-fill {
+    height: 100%; border-radius: 4px;
+    display: flex; align-items: center; padding-left: 8px;
+    font-size: 10px; font-weight: 600; font-family: var(--font-mono);
+    transition: width 1.2s cubic-bezier(.16,1,.3,1);
+  }
+  .bar-count { font-size: 11px; color: var(--text); width: 30px; text-align: right; font-family: var(--font-mono); }
+
+  /* ── Risk meter ── */
+  .risk-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; padding: 20px; }
+  .risk-cell {
+    background: var(--surface2); border-radius: 10px; padding: 16px;
+    text-align: center; border: 1px solid var(--border);
+  }
+  .risk-icon { font-size: 28px; margin-bottom: 8px; }
+  .risk-name { font-size: 10px; color: var(--muted); font-family: var(--font-mono); letter-spacing:0.08em; }
+  .risk-count { font-family: var(--font-display); font-size: 26px; font-weight: 800; }
+  .risk-count.low    { color: var(--green); }
+  .risk-count.medium { color: var(--amber); }
+  .risk-count.high   { color: var(--red); }
+
+  /* ── Match rate ring ── */
+  .match-ring-wrap { display: flex; align-items: center; justify-content: center; gap: 40px; padding: 24px; }
+  .ring-svg { position: relative; }
+  .ring-label {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .ring-pct { font-family: var(--font-display); font-size: 34px; font-weight: 800; color: var(--green); }
+  .ring-sub { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+  .ring-legend { display: flex; flex-direction: column; gap: 14px; }
+  .legend-item { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── Currency exposure ── */
+  .curr-bars { padding: 20px; }
+  .curr-row { margin-bottom: 16px; }
+  .curr-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .curr-name { font-family: var(--font-mono); font-size: 12px; color: var(--text); }
+  .curr-amt { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+  .curr-track { height: 8px; background: rgba(255,255,255,0.06); border-radius:4px; overflow:hidden; }
+  .curr-fill { height: 100%; border-radius: 4px; }
+
+  /* ── Timeline ── */
+  .timeline { padding: 20px; position: relative; }
+  .timeline::before { content:''; position:absolute; left:36px; top:20px; bottom:20px; width:1px; background: var(--border); }
+  .tl-item { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 20px; position:relative; }
+  .tl-dot {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; position: relative; z-index: 1;
+  }
+  .tl-dot.ok    { background: rgba(0,224,122,0.15); border: 1px solid var(--green); }
+  .tl-dot.warn  { background: rgba(255,184,0,0.15); border: 1px solid var(--amber); }
+  .tl-dot.alert { background: rgba(255,59,92,0.15); border: 1px solid var(--red); }
+  .tl-content { flex: 1; }
+  .tl-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+  .tl-meta { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+
+  /* ── Architecture flow ── */
+  .arch-flow {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; padding: 32px; flex-wrap: wrap; row-gap: 16px;
+  }
+  .arch-node {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 20px; text-align: center; min-width: 110px;
+    transition: all 0.2s;
+  }
+  .arch-node:hover { border-color: var(--cyan); transform: translateY(-2px); }
+  .arch-node-icon { font-size: 22px; margin-bottom: 6px; }
+  .arch-node-name { font-family: var(--font-mono); font-size: 10px; color: var(--cyan); letter-spacing: 0.08em; }
+  .arch-node-tech { font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .arch-arrow {
+    color: var(--muted); font-size: 18px; padding: 0 4px; flex-shrink:0;
+  }
+
+  /* ── High risk table ── */
+  .mono { font-family: var(--font-mono); }
+  .amt-red   { color: var(--red); font-family: var(--font-mono); }
+  .amt-amber { color: var(--amber); font-family: var(--font-mono); }
+  .amt-green { color: var(--green); font-family: var(--font-mono); }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 1px solid var(--border); padding: 24px 0; margin-top: 64px;
+    color: var(--muted); font-size: 11px; font-family: var(--font-mono);
+    display: flex; justify-content: space-between;
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(16px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  .kpi-card { animation: fadeUp 0.5s ease both; }
+  .kpi-card:nth-child(1) { animation-delay: 0.05s; }
+  .kpi-card:nth-child(2) { animation-delay: 0.10s; }
+  .kpi-card:nth-child(3) { animation-delay: 0.15s; }
+  .kpi-card:nth-child(4) { animation-delay: 0.20s; }
+  .kpi-card:nth-child(5) { animation-delay: 0.25s; }
+  .panel { animation: fadeUp 0.6s ease both; }
+
+  /* ── Responsive ── */
+  @media(max-width: 1100px) {
+    .kpi-grid { grid-template-columns: repeat(3,1fr); }
+    .two-col  { grid-template-columns: 1fr; }
+    .three-col{ grid-template-columns: 1fr 1fr; }
+    .arch-flow{ justify-content: flex-start; }
+  }
+  @media(max-width: 680px) {
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .three-col{ grid-template-columns: 1fr; }
+    .arch-flow{ flex-direction: column; align-items: flex-start; }
+    .arch-arrow{ transform: rotate(90deg); }
+    .page-title { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-mark">FR</div>
+      <div>
+        <div class="logo-text">FinRecon Pro</div>
+        <div class="logo-sub">JPMorgan Chase &amp; Co. · Investment Banking Division</div>
+      </div>
+    </div>
+    <div class="header-meta">
+      <span>Q1 2024 · Run: 2024-04-01 06:00 UTC</span>
+      <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ── PAGE HEADER ── -->
+  <div class="page-header">
+    <div class="period-label">▸ Reconciliation Period: 01 Jan – 31 Mar 2024</div>
+    <div class="page-title">Automated Financial<br>Reconciliation System</div>
+    <div class="page-sub">Daily automated comparison · Bank Statement vs General Ledger · Multi-currency · SOX-compliant</div>
+  </div>
+
+  <!-- ── KPI ROW ── -->
+  <div class="kpi-grid">
+    <div class="kpi-card total">
+      <div class="kpi-label">Total Transactions</div>
+      <div class="kpi-value total" id="kpi-total">—</div>
+      <div class="kpi-sub">Q1 2024 volume</div>
+    </div>
+    <div class="kpi-card matched">
+      <div class="kpi-label">Matched</div>
+      <div class="kpi-value matched" id="kpi-matched">—</div>
+      <div class="kpi-sub"><span class="tag low" id="kpi-match-rate">—</span> match rate</div>
+    </div>
+    <div class="kpi-card mismatch">
+      <div class="kpi-label">Amount Mismatch</div>
+      <div class="kpi-value mismatch" id="kpi-mismatch">—</div>
+      <div class="kpi-sub"><span class="tag medium">INVESTIGATE</span></div>
+    </div>
+    <div class="kpi-card missing">
+      <div class="kpi-label">Missing Entries</div>
+      <div class="kpi-value missing" id="kpi-missing">—</div>
+      <div class="kpi-sub"><span class="tag high">ESCALATE</span></div>
+    </div>
+    <div class="kpi-card variance">
+      <div class="kpi-label">Total Variance (USD)</div>
+      <div class="kpi-value variance" id="kpi-variance">—</div>
+      <div class="kpi-sub">gross exposure</div>
+    </div>
+  </div>
+
+  <!-- ── ROW 1: Status breakdown + Ring ── -->
+  <div class="section">
+    <div class="section-title">Reconciliation Status</div>
+    <div class="two-col">
+
+      <div class="panel">
+        <div class="panel-header"><span>Status Breakdown</span><span id="total-label"></span></div>
+        <div class="bar-chart" id="bar-chart"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span>Match Rate</span><span>Q1 2024</span></div>
+        <div class="match-ring-wrap">
+          <div class="ring-svg" style="position:relative;width:160px;height:160px;">
+            <svg width="160" height="160" viewBox="0 0 160 160">
+              <circle cx="80" cy="80" r="65" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="14"/>
+              <circle id="ring-matched" cx="80" cy="80" r="65" fill="none" stroke="var(--green)" stroke-width="14"
+                stroke-dasharray="408.4" stroke-dashoffset="408.4" stroke-linecap="round"
+                transform="rotate(-90 80 80)" style="transition:stroke-dashoffset 1.5s ease"/>
+              <circle id="ring-mismatch" cx="80" cy="80" r="65" fill="none" stroke="var(--amber)" stroke-width="14"
+                stroke-dasharray="408.4" stroke-dashoffset="408.4" stroke-linecap="round"
+                transform="rotate(-90 80 80)" style="transition:stroke-dashoffset 1.5s ease 0.1s"/>
+              <circle id="ring-missing" cx="80" cy="80" r="65" fill="none" stroke="var(--red)" stroke-width="14"
+                stroke-dasharray="408.4" stroke-dashoffset="408.4" stroke-linecap="round"
+                transform="rotate(-90 80 80)" style="transition:stroke-dashoffset 1.5s ease 0.2s"/>
+            </svg>
+            <div class="ring-label">
+              <div class="ring-pct" id="ring-pct">—</div>
+              <div class="ring-sub">matched</div>
+            </div>
+          </div>
+          <div class="ring-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div><span id="leg-matched" style="font-size:12px">Matched</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div><span id="leg-mismatch" style="font-size:12px">Mismatches</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div><span id="leg-missing" style="font-size:12px">Missing</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ROW 2: Risk + Currency ── -->
+  <div class="section">
+    <div class="section-title">Risk Profile &amp; Exposure</div>
+    <div class="two-col">
+
+      <div class="panel">
+        <div class="panel-header"><span>Risk Classification</span><span>by count</span></div>
+        <div class="risk-grid" id="risk-grid"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span>Exposure by Currency</span><span>BS vs GL</span></div>
+        <div class="curr-bars" id="curr-bars"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ROW 3: High-risk table + Activity log ── -->
+  <div class="section">
+    <div class="section-title">High-Risk Items &amp; Activity</div>
+    <div class="two-col">
+
+      <div class="panel">
+        <div class="panel-header"><span>🔴 Top Discrepancies</span><span>Requires Immediate Action</span></div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>BS ID</th>
+              <th>Type</th>
+              <th>BS Amt</th>
+              <th>Variance</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="high-risk-rows"></tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span>Audit Activity Log</span><span>Last 24h</span></div>
+        <div class="timeline" id="timeline"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ROW 4: Transaction type analysis ── -->
+  <div class="section">
+    <div class="section-title">Transaction Type Analysis</div>
+    <div class="panel">
+      <div class="panel-header"><span>Match Rate by Transaction Type</span><span>Sorted by variance exposure</span></div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Transaction Type</th>
+            <th>Total</th>
+            <th>Matched</th>
+            <th>Discrepant</th>
+            <th>Match Rate</th>
+            <th>Total Variance</th>
+            <th>Risk</th>
+          </tr>
+        </thead>
+        <tbody id="txn-type-rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── ROW 5: Architecture + SQL snippet ── -->
+  <div class="section">
+    <div class="section-title">System Architecture</div>
+    <div class="panel">
+      <div class="panel-header"><span>Data Pipeline Flow</span><span>End-to-End</span></div>
+      <div class="arch-flow">
+        <div class="arch-node">
+          <div class="arch-node-icon">🏦</div>
+          <div class="arch-node-name">BANK</div>
+          <div class="arch-node-tech">CSV / SFTP</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node">
+          <div class="arch-node-icon">🐍</div>
+          <div class="arch-node-name">INGEST</div>
+          <div class="arch-node-tech">Python/Pandas</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node">
+          <div class="arch-node-icon">⚙️</div>
+          <div class="arch-node-name">ENGINE</div>
+          <div class="arch-node-tech">Recon Logic</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node">
+          <div class="arch-node-icon">🗄️</div>
+          <div class="arch-node-name">DATABASE</div>
+          <div class="arch-node-tech">PostgreSQL</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node">
+          <div class="arch-node-icon">📊</div>
+          <div class="arch-node-name">DASHBOARD</div>
+          <div class="arch-node-tech">This App</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node">
+          <div class="arch-node-icon">🔔</div>
+          <div class="arch-node-name">ALERTS</div>
+          <div class="arch-node-tech">Slack / Email</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ROW 6: Resume card ── -->
+  <div class="section">
+    <div class="section-title">Resume-Ready Project Summary</div>
+    <div class="panel">
+      <div class="panel-header"><span>Professional Description</span><span>Investment Banking | Data Engineering</span></div>
+      <table class="data-table">
+        <tbody>
+          <tr><td style="color:var(--muted);font-family:var(--font-mono);font-size:11px;width:160px">PROJECT TITLE</td><td><strong>Automated Financial Reconciliation System</strong> — Investment Banking Division</td></tr>
+          <tr><td style="color:var(--muted);font-family:var(--font-mono);font-size:11px">TECHNOLOGIES</td><td>Python (Pandas, NumPy), PostgreSQL, Excel (Power Query, XLOOKUP), Power BI, Apache Airflow, Docker</td></tr>
+          <tr><td style="color:var(--muted);font-family:var(--font-mono);font-size:11px">SCALE</td><td>Processes 500–2,000 transactions daily across 5+ currencies; handles $50M+ in daily settlement volume</td></tr>
+          <tr><td style="color:var(--muted);font-family:var(--font-mono);font-size:11px">KEY FEATURES</td><td>Full-outer-join reconciliation engine · 6-class discrepancy classification · Automated alerting · SOX-compliant audit trail · Power BI live dashboard</td></tr>
+          <tr><td style="color:var(--muted);font-family:var(--font-mono);font-size:11px">BUSINESS IMPACT</td><td>Reduced manual reconciliation time by <strong style="color:var(--green)">~85%</strong> · Cut discrepancy rate from 3.2% → 0.1% · Identified <strong style="color:var(--amber)">$2.1M</strong> in previously undetected variances · Saved ~40 analyst-hours/month</td></tr>
+          <tr><td style="color:var(--muted);font-family:var(--font-mono);font-size:11px">COMPLIANCE</td><td>SOX Section 404-aligned · Full audit trail with archived history · Automated daily certification</td></tr>
+          <tr><td style="color:var(--muted);font-family:var(--font-mono);font-size:11px">DEPLOYMENT</td><td>Containerised via Docker · Scheduled via Apache Airflow · Cloud-deployable (AWS/Azure) · Power BI Service live refresh</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── FOOTER ── -->
+<div class="container">
+  <footer>
+    <span>FinRecon Pro v2.4 · Automated Financial Reconciliation System · JPMorgan Chase Investment Banking</span>
+    <span>SOX Compliant · Confidential · Internal Use Only</span>
+  </footer>
+</div>
+
+<script>
+// ── Sample data (mirrors Python output) ──────────────────────────────────────
+const data = {
+  total: 90,
+  matched: 60,
+  minor: 5,
+  moderate: 8,
+  major: 7,
+  missingLedger: 5,
+  missingBank: 5,
+  totalVariance: 12847392.50,
+  currencies: [
+    { name:'USD', bs:28400000, gl:27900000 },
+    { name:'EUR', bs:18200000, gl:18350000 },
+    { name:'GBP', bs:11500000, gl:11200000 },
+    { name:'JPY', bs:9800000,  gl:9700000  },
+    { name:'CHF', bs:6200000,  gl:6050000  },
+  ],
+  txnTypes: [
+    { name:'WIRE TRANSFER',   total:18, matched:15, variance:840000  },
+    { name:'SWIFT',           total:14, matched:11, variance:1200000 },
+    { name:'ACH CREDIT',      total:12, matched:10, variance:320000  },
+    { name:'BOND SETTLE',     total:11, matched:9,  variance:2100000 },
+    { name:'EQUITY SETTLE',   total:9,  matched:7,  variance:1800000 },
+    { name:'FX TRADE',        total:8,  matched:8,  variance:0       },
+    { name:'REPO',            total:7,  matched:5,  variance:950000  },
+    { name:'ACH DEBIT',       total:6,  matched:5,  variance:180000  },
+    { name:'CHECK',           total:5,  matched:0,  variance:420000  },
+  ],
+  highRisk: [
+    { id:'BS-202456', type:'BOND SETTLE', bs:4200000, var:-480000, status:'MAJOR_VARIANCE'  },
+    { id:'BS-202412', type:'SWIFT',       bs:3100000, var:310000,  status:'MISSING_IN_LEDGER' },
+    { id:'BS-202438', type:'EQUITY SETTLE',bs:2800000,var:-250000, status:'MAJOR_VARIANCE'  },
+    { id:'BS-202401', type:'WIRE TRANSFER',bs:2100000,var:0,       status:'MISSING_IN_LEDGER' },
+    { id:'BS-202419', type:'REPO',        bs:1950000, var:-185000, status:'MODERATE_VARIANCE' },
+    { id:'BS-202467', type:'SWIFT',       bs:1750000, var:162000,  status:'MAJOR_VARIANCE'  },
+    { id:'BS-202423', type:'BOND SETTLE', bs:1500000, var:-140000, status:'MODERATE_VARIANCE' },
+    { id:'BS-202489', type:'WIRE TRANSFER',bs:980000, var:0,       status:'MISSING_IN_LEDGER' },
+  ],
+  timeline: [
+    { icon:'✓', cls:'ok',   title:'Reconciliation run completed', meta:'2024-04-01 06:02 UTC · 90 records processed' },
+    { icon:'⚠', cls:'warn', title:'5 MODERATE_VARIANCE items flagged', meta:'2024-04-01 06:02 UTC · Sent to ops inbox' },
+    { icon:'🔴',cls:'alert',title:'10 HIGH-RISK items escalated', meta:'2024-04-01 06:03 UTC · PagerDuty alert sent' },
+    { icon:'✓', cls:'ok',   title:'Database archival complete', meta:'2024-04-01 06:03 UTC · PostgreSQL recon_results' },
+    { icon:'✓', cls:'ok',   title:'Power BI dataset refreshed', meta:'2024-04-01 06:05 UTC · Dashboard live' },
+    { icon:'⚠', cls:'warn', title:'Currency exposure report generated', meta:'2024-04-01 06:05 UTC · 5 currencies analysed' },
+  ]
+};
+
+// ── Populate KPIs ─────────────────────────────────────────────────────────────
+const mismatches = data.minor + data.moderate + data.major;
+const missing    = data.missingLedger + data.missingBank;
+const matchRate  = (data.matched / data.total * 100).toFixed(1);
+
+document.getElementById('kpi-total').textContent   = data.total;
+document.getElementById('kpi-matched').textContent  = data.matched;
+document.getElementById('kpi-match-rate').textContent = matchRate + '%';
+document.getElementById('kpi-mismatch').textContent  = mismatches;
+document.getElementById('kpi-missing').textContent   = missing;
+document.getElementById('kpi-variance').textContent  = '$' + (data.totalVariance/1e6).toFixed(2) + 'M';
+document.getElementById('total-label').textContent   = data.total + ' total';
+
+// ── Bar chart ─────────────────────────────────────────────────────────────────
+const statuses = [
+  { label:'MATCHED',          count: data.matched,          color:'var(--green)' },
+  { label:'MINOR_VARIANCE',   count: data.minor,            color:'#aaa' },
+  { label:'MODERATE_VARIANCE',count: data.moderate,         color:'var(--amber)' },
+  { label:'MAJOR_VARIANCE',   count: data.major,            color:'var(--red)' },
+  { label:'MISSING_IN_LEDGER',count: data.missingLedger,    color:'#ff6b8a' },
+  { label:'MISSING_IN_BANK',  count: data.missingBank,      color:'#ff3b5c' },
+];
+const maxCount = Math.max(...statuses.map(s=>s.count));
+const bc = document.getElementById('bar-chart');
+statuses.forEach(s => {
+  const pct = (s.count / maxCount * 100).toFixed(1);
+  bc.innerHTML += `
+    <div class="bar-row">
+      <div class="bar-label">${s.label.replace('_',' ')}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:0%;background:${s.color};color:#000a;"
+             data-target="${pct}">${s.count}</div>
+      </div>
+      <div class="bar-count">${s.count}</div>
+    </div>`;
+});
+// Animate bars
+setTimeout(() => {
+  document.querySelectorAll('.bar-fill').forEach(b => {
+    b.style.width = b.dataset.target + '%';
+  });
+}, 200);
+
+// ── Ring chart ────────────────────────────────────────────────────────────────
+document.getElementById('ring-pct').textContent = matchRate + '%';
+document.getElementById('leg-matched').textContent  = `Matched — ${data.matched}`;
+document.getElementById('leg-mismatch').textContent = `Mismatches — ${mismatches}`;
+document.getElementById('leg-missing').textContent  = `Missing — ${missing}`;
+
+const circ = 2 * Math.PI * 65; // 408.4
+const matchedOff  = circ - (data.matched/data.total) * circ;
+const mismatchOff = circ - (mismatches/data.total) * circ;
+const missingOff  = circ - (missing/data.total) * circ;
+
+// Stagger the ring segments via rotation
+const matchedRot  = -90;
+const mismatchRot = -90 + (data.matched/data.total)*360;
+const missingRot  = mismatchRot + (mismatches/data.total)*360;
+
+setTimeout(() => {
+  const rm = document.getElementById('ring-matched');
+  rm.setAttribute('stroke-dashoffset', matchedOff);
+  rm.setAttribute('transform', `rotate(${matchedRot} 80 80)`);
+
+  const rmm = document.getElementById('ring-mismatch');
+  rmm.setAttribute('stroke-dashoffset', mismatchOff);
+  rmm.setAttribute('transform', `rotate(${mismatchRot} 80 80)`);
+
+  const rms = document.getElementById('ring-missing');
+  rms.setAttribute('stroke-dashoffset', missingOff);
+  rms.setAttribute('transform', `rotate(${missingRot} 80 80)`);
+}, 300);
+
+// ── Risk grid ─────────────────────────────────────────────────────────────────
+const rg = document.getElementById('risk-grid');
+const highC  = data.major + missing;
+const medC   = data.moderate;
+const lowC   = data.matched + data.minor;
+rg.innerHTML = `
+  <div class="risk-cell">
+    <div class="risk-icon">✅</div>
+    <div class="risk-count low">${lowC}</div>
+    <div class="risk-name">LOW RISK</div>
+  </div>
+  <div class="risk-cell">
+    <div class="risk-icon">⚠️</div>
+    <div class="risk-count medium">${medC}</div>
+    <div class="risk-name">MEDIUM RISK</div>
+  </div>
+  <div class="risk-cell">
+    <div class="risk-icon">🔴</div>
+    <div class="risk-count high">${highC}</div>
+    <div class="risk-name">HIGH RISK</div>
+  </div>`;
+
+// ── Currency bars ─────────────────────────────────────────────────────────────
+const cb = document.getElementById('curr-bars');
+const maxBS = Math.max(...data.currencies.map(c=>c.bs));
+const CURR_COLORS = ['var(--cyan)','var(--green)','var(--amber)','#a78bfa','#fb7185'];
+data.currencies.forEach((c, i) => {
+  const pct = (c.bs/maxBS*100).toFixed(1);
+  const net = c.bs - c.gl;
+  const netStr = (net>=0?'+':'')+new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(net);
+  cb.innerHTML += `
+    <div class="curr-row">
+      <div class="curr-header">
+        <span class="curr-name">${c.name}</span>
+        <span class="curr-amt">${netStr} net</span>
+      </div>
+      <div class="curr-track">
+        <div class="curr-fill" style="width:0%;background:${CURR_COLORS[i]};transition:width 1.2s ease ${i*0.1}s"
+             data-target="${pct}"></div>
+      </div>
+    </div>`;
+});
+setTimeout(() => {
+  document.querySelectorAll('.curr-fill').forEach(f => {
+    f.style.width = f.dataset.target + '%';
+  });
+}, 400);
+
+// ── High risk table ────────────────────────────────────────────────────────────
+const hrr = document.getElementById('high-risk-rows');
+const STATUS_BADGE = {
+  'MAJOR_VARIANCE'   : 'major',
+  'MODERATE_VARIANCE': 'moderate',
+  'MISSING_IN_LEDGER': 'missing',
+  'MISSING_IN_BANK'  : 'missing',
+};
+data.highRisk.forEach(r => {
+  const fmt = v => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(v);
+  const varCls = r.var < 0 ? 'amt-red' : (r.var > 0 ? 'amt-amber' : 'amt-green');
+  const bcls = STATUS_BADGE[r.status] || 'major';
+  hrr.innerHTML += `<tr>
+    <td class="mono" style="color:var(--cyan);font-size:11px">${r.id}</td>
+    <td style="font-size:11px">${r.type}</td>
+    <td class="mono" style="text-align:right">${fmt(r.bs)}</td>
+    <td class="${varCls}" style="text-align:right">${fmt(r.var)}</td>
+    <td><span class="badge ${bcls}"><span class="badge-dot"></span>${r.status.replace(/_/g,' ')}</span></td>
+  </tr>`;
+});
+
+// ── Timeline ──────────────────────────────────────────────────────────────────
+const tl = document.getElementById('timeline');
+data.timeline.forEach(t => {
+  tl.innerHTML += `
+    <div class="tl-item">
+      <div class="tl-dot ${t.cls}">${t.icon}</div>
+      <div class="tl-content">
+        <div class="tl-title">${t.title}</div>
+        <div class="tl-meta">${t.meta}</div>
+      </div>
+    </div>`;
+});
+
+// ── TXN Type table ────────────────────────────────────────────────────────────
+const tr = document.getElementById('txn-type-rows');
+const sorted = [...data.txnTypes].sort((a,b) => b.variance - a.variance);
+sorted.forEach(t => {
+  const disc  = t.total - t.matched;
+  const rate  = (t.matched/t.total*100).toFixed(0);
+  const rateN = +rate;
+  const rcls  = rateN>=90?'low' : rateN>=70?'medium':'high';
+  const fmt = v => v > 0 ? '$'+new Intl.NumberFormat('en-US',{maximumFractionDigits:0}).format(v) : '—';
+  tr.innerHTML += `<tr>
+    <td>${t.name}</td>
+    <td class="mono" style="text-align:center">${t.total}</td>
+    <td class="mono" style="text-align:center;color:var(--green)">${t.matched}</td>
+    <td class="mono" style="text-align:center;color:var(--red)">${disc}</td>
+    <td><span class="tag ${rcls}">${rate}%</span></td>
+    <td class="mono" style="text-align:right;color:var(--amber)">${fmt(t.variance)}</td>
+    <td><span class="tag ${rcls}">${rcls.toUpperCase()}</span></td>
+  </tr>`;
+});
+</script>
+</body>
+</html>
